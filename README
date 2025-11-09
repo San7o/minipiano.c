@@ -1,0 +1,22 @@
+minipiano.c
+===========
+
+Play the piano using signwaves and your keyboard!
+
+Author:  Giovanni Santini
+Mail:    giovanni.santini@proton.me
+License: MIT
+
+Keys
+----
+
+Notes follow a piano-like layout on your keyboard:
+
+        w e  t y u
+      a s d f g h j k
+
+Additional keys:
+
+z: raise starting frequency by one half tone
+x: decrease starting frequency by one half tone
+q: quit
