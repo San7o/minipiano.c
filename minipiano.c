@@ -42,12 +42,12 @@
 #define MA_PI      3.14159265358979323846264f
 #endif
 
-#define WINDOW_NAME   "hello world window"
+#define WINDOW_NAME   "minipiano"
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 500
 #define WINDOW_FLAGS  0
 
-static double a_frequency = 440.0;
+static double c_frequency = 440.0;
 static double phase = 0.0;
 double frequency;
 
@@ -102,7 +102,7 @@ int main(void)
     return -1;  // Failed to initialize the device.
   }
 
-  frequency = a_frequency;
+  frequency = c_frequency;
 
   ma_device_start(&device);     // The device is sleeping by default so you'll need to start it manually.
 
@@ -117,52 +117,52 @@ int main(void)
         case 'q':
           goto cleanup;
         case 'z':
-          a_frequency *= pow(2, 1 / 12.0);
-          frequency = a_frequency;
+          c_frequency *= pow(2, 1 / 12.0);
+          frequency = c_frequency;
           break;
         case 'x':
-          a_frequency /= pow(2, 1 / 12.0);
-          frequency = a_frequency;
+          c_frequency /= pow(2, 1 / 12.0);
+          frequency = c_frequency;
           break;
           // Piano keys
-        case 'a': // do
-          frequency = a_frequency;
+        case 'a': // C
+          frequency = c_frequency;
           break;
-        case 'w': // do#
-          frequency = a_frequency * pow(2, 1.0 / 12);
+        case 'w': // C#
+          frequency = c_frequency * pow(2, 1.0 / 12);
           break;
-        case 's': // re
-          frequency = a_frequency * pow(2, 2.0 / 12);
+        case 's': // D
+          frequency = c_frequency * pow(2, 2.0 / 12);
           break;
-        case 'e': // re#
-          frequency = a_frequency * pow(2, 3.0 / 12);
+        case 'e': // D#
+          frequency = c_frequency * pow(2, 3.0 / 12);
           break; 
-        case 'd': // mi
-          frequency = a_frequency * pow(2, 4.0 / 12);
+        case 'd': // E
+          frequency = c_frequency * pow(2, 4.0 / 12);
           break;
-        case 'f': // fa
-          frequency = a_frequency * pow(2, 5.0 / 12);
+        case 'f': // F
+          frequency = c_frequency * pow(2, 5.0 / 12);
           break;
-        case 't': // fa#
-          frequency = a_frequency * pow(2, 6.0 / 12);
+        case 't': // F#
+          frequency = c_frequency * pow(2, 6.0 / 12);
           break;
-        case 'g': // sol
-          frequency = a_frequency * pow(2, 7.0 / 12);
+        case 'g': // G
+          frequency = c_frequency * pow(2, 7.0 / 12);
           break;
-        case 'y': // sol#
-          frequency = a_frequency * pow(2, 8.0 / 12);
+        case 'y': // G#
+          frequency = c_frequency * pow(2, 8.0 / 12);
           break;
-        case 'h': // la
-          frequency = a_frequency * pow(2, 9.0 / 12);
+        case 'h': // A
+          frequency = c_frequency * pow(2, 9.0 / 12);
           break;
-        case 'u': // la#
-          frequency = a_frequency * pow(2, 10.0 / 12);
+        case 'u': // A#
+          frequency = c_frequency * pow(2, 10.0 / 12);
           break;
-        case 'j': // si
-          frequency = a_frequency * pow(2, 11.0 / 12);
+        case 'j': // B
+          frequency = c_frequency * pow(2, 11.0 / 12);
           break;
-        case 'k': // do
-          frequency = a_frequency * pow(2, 12.0 / 12);
+        case 'k': // C
+          frequency = c_frequency * pow(2, 12.0 / 12);
           break;
         default:
           break;
