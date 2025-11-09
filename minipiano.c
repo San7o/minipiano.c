@@ -4,7 +4,7 @@
 // minipiano.c
 // ===========
 //
-// Play the piano using signwaves and your keyboard!
+// Play the piano using sinewaves and your keyboard!
 //
 // Author:  Giovanni Santini
 // Mail:    giovanni.santini@proton.me
