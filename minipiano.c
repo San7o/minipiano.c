@@ -64,7 +64,7 @@ static double phase = 0.0;
 double frequency;
 double amplitude = 0.2;
 
-void sign_simple(double sample_rate, float* output)
+void sine_simple(double sample_rate, float* output)
 {
   *output = amplitude * sin(phase * 2 * MA_PI);
   phase += frequency / sample_rate;
@@ -123,7 +123,7 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     switch(instrument)
     {
     case SINE:
-      sign_simple(sample_rate, &output[i]);
+      sine_simple(sample_rate, &output[i]);
       break;
     case SQUARE:
       tooth(sample_rate, &output[i]);
