@@ -17,6 +17,10 @@ Notes follow a piano-like layout on your keyboard:
 
 Additional keys:
 
-z: raise starting frequency by one half tone
-x: decrease starting frequency by one half tone
-q: quit
+  - o: increase amplitude (volume)
+  - p: decrease amplitude (volume)
+  - z: raise starting frequency by one half tone
+  - x: decrease starting frequency by one half tone
+  - 1/2/3/4: switch instrument
+  - q: quit
+

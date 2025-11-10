@@ -20,9 +20,12 @@
 //
 // Additional keys:
 //
-// z: raise starting frequency by one half tone
-// x: decrease starting frequency by one half tone
-// q: quit
+//  - o: increase amplitude (volume)
+//  - p: decrease amplitude (volume)
+//  - z: raise starting frequency by one half tone
+//  - x: decrease starting frequency by one half tone
+//  - 1/2/3/4: switch instrument
+//  - q: quit
 //
 
 #include <stdio.h>
@@ -47,9 +50,63 @@
 #define WINDOW_HEIGHT 500
 #define WINDOW_FLAGS  0
 
+typedef enum {
+  SINE = 0,
+  SQUARE,
+  TRIANGLE,
+  SAW,
+} Instrument;
+
+Instrument instrument = SINE;
+
 static double c_frequency = 440.0;
 static double phase = 0.0;
 double frequency;
+double amplitude = 0.2;
+
+void sign_simple(double sample_rate, float* output)
+{
+  *output = amplitude * sin(phase * 2 * MA_PI);
+  phase += frequency / sample_rate;
+  if (phase >= 1.0) phase -= 1.0;
+}
+
+void tooth(double sample_rate, float* output)
+{
+  if (phase * 2 * MA_PI > 0 && phase * 2 * MA_PI < MA_PI)
+  {
+    *output = amplitude;
+  }
+  else {
+    *output = -amplitude;
+  }
+  phase += (2.0 * frequency) / sample_rate;
+  if (phase >= 1.0) phase -= 2.0;
+}
+
+
+void triangle(double sample_rate, float* output)
+{
+  *output = amplitude * phase;
+
+  static bool increasing = false;
+  double df = (2.0 * frequency) / sample_rate;
+  if (!increasing && phase - df < -1.0) increasing = true;
+  if (increasing && phase + df > 1.0) increasing = false;
+
+  if (increasing) {
+    phase += df;
+  } else {
+    phase -= df;
+  }
+}
+
+void saw(double sample_rate, float* output)
+{
+  *output = amplitude * phase;
+  phase += (2.0 * frequency) / sample_rate;
+  if (phase >= 1.0) phase = -2.0; 
+}
 
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
@@ -63,9 +120,21 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
   float* output = (float*)pOutput;
   for (unsigned int i = 0; i < frameCount; ++i)
   {
-    output[i] = 0.2f * sin(phase * 2 * MA_PI);
-    phase += frequency / sample_rate;
-    if (phase >= 1.0) phase -= 1.0;
+    switch(instrument)
+    {
+    case SINE:
+      sign_simple(sample_rate, &output[i]);
+      break;
+    case SQUARE:
+      tooth(sample_rate, &output[i]);
+      break;
+    case TRIANGLE:
+      triangle(sample_rate, &output[i]);
+      break;
+    case SAW:
+      saw(sample_rate, &output[i]);
+      break;
+    }
   }
 }
 
@@ -164,11 +233,36 @@ int main(void)
         case 'k': // C
           frequency = c_frequency * pow(2, 12.0 / 12);
           break;
+        // Select instrument
+        case '1':
+          instrument = SINE;
+          printf("Instrument: SINE\n");
+          break;
+        case '2':
+          instrument = SQUARE;
+          printf("Instrument: SQUARE\n");
+          break;
+        case '3':
+          instrument = TRIANGLE;
+          printf("Instrument: TRIANGLE\n");
+          break;
+        case '4':
+          instrument = SAW;
+          printf("Instrument: SAW\n");
+          break;
+        // Amplitude
+        case 'o':
+          amplitude += 0.1;
+          printf("Amplitude: %f\n", amplitude);
+          break;
+        case 'p':
+          amplitude -= 0.1;
+          if (amplitude < 0.0) amplitude = 0.0;
+          printf("Amplitude: %f\n", amplitude);
+          break;
         default:
           break;
         }
-
-        printf("Frequency: %f\n", frequency);
       }
     }
 
