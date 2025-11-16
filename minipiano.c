@@ -28,6 +28,10 @@
 //  - q: quit
 //
 
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 199309L
+#endif
+
 #include <stdio.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
@@ -35,11 +39,13 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_timer.h>
 
 #include <stdio.h>
 #include <math.h>
 
 #include "miniaudio.h"
+#include "fft.c"
 
 #ifndef MA_PI
 #define MA_PI      3.14159265358979323846264f
@@ -49,6 +55,10 @@
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 500
 #define WINDOW_FLAGS  0
+// TODO: Match FPS to a multiple of the period for better visualization
+#define FPS 10.7
+
+#define MIN(x, y) ((x < y) ? (x) : (y))
 
 typedef enum {
   SINE = 0,
@@ -83,7 +93,6 @@ void tooth(double sample_rate, float* output)
   phase += (2.0 * frequency) / sample_rate;
   if (phase >= 1.0) phase -= 2.0;
 }
-
 
 void triangle(double sample_rate, float* output)
 {
@@ -136,6 +145,8 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
       break;
     }
   }
+
+  frames_as_frequencies(output, frames, MIN(frameCount, FRAME_COUNT_MAX));
 }
 
 int main(void)
@@ -175,8 +186,12 @@ int main(void)
 
   ma_device_start(&device);     // The device is sleeping by default so you'll need to start it manually.
 
+  double delta_time = 0.0;
   while(1)
-  {  
+  {
+    struct timespec frame_start;
+    clock_gettime(CLOCK_MONOTONIC, &frame_start);
+
     if (SDL_PollEvent(&event))
     {
       if (SDL_EVENT_KEY_DOWN == event.type)
@@ -266,27 +281,57 @@ int main(void)
       }
     }
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    if (!SDL_RenderClear(renderer))
+    if (delta_time > 1 / FPS) // Render frame
     {
-      fprintf(stderr, "Error Clearing SDL Window: %s\n", SDL_GetError());    
-      goto cleanup;
-    }
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+      delta_time = 0;
 
-    // Render frame...
-    char frequency_str[100] = {0};
-    sprintf(frequency_str, "%f Hz", frequency);
+      // Render frame...
+      
+      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+      if (!SDL_RenderClear(renderer))
+      {
+        fprintf(stderr, "Error Clearing SDL Window: %s\n", SDL_GetError());    
+        goto cleanup;
+      }
+      SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+      
+      char frequency_str[100] = {0};
+      sprintf(frequency_str, "%f Hz", frequency);
     
-    SDL_SetRenderScale(renderer, 4.0f, 4.0f);
-    SDL_RenderDebugText(renderer, 55, 55, frequency_str);
-    SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+      SDL_SetRenderScale(renderer, 4.0f, 4.0f);
+      SDL_RenderDebugText(renderer, 55, 10, frequency_str);
+      SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+
+      fft(frames, frequencies, FRAME_COUNT_MAX);
+      //frames_as_frequencies(frames, frequencies, FRAME_COUNT_MAX);
+    
+      SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);    
+      for (unsigned int i = 0; i < FRAME_COUNT_MAX / 2; ++i)
+      {
+        if (frequencies[i] <= 0.0) continue;
+        SDL_FRect rect = (SDL_FRect){
+          .x = i * WINDOW_WIDTH / FRAME_COUNT_MAX * 2,
+          .y = WINDOW_HEIGHT/2,
+          .w = WINDOW_WIDTH / FRAME_COUNT_MAX,
+          .h = WINDOW_HEIGHT * frequencies[i] / 2.0 * FREQUENCY_SCALING,
+        };
+        SDL_RenderFillRect(renderer, &rect);
+        rect.h *= -1; // Mirror the spectrum
+        SDL_RenderFillRect(renderer, &rect);
+      }
+    }
     
     if (!SDL_RenderPresent(renderer))
     {
       fprintf(stderr, "Error Rendering SDL Window: %s\n", SDL_GetError());    
       goto cleanup;
     }
+
+    SDL_Delay(16);
+    struct timespec frame_end;
+    clock_gettime(CLOCK_MONOTONIC, &frame_end);
+    delta_time += (frame_end.tv_sec - frame_start.tv_sec)
+      + (frame_end.tv_nsec - frame_start.tv_nsec) / 1e9;
   }
 
  cleanup:
